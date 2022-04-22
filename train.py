@@ -12,9 +12,11 @@ if __name__ == '__main__':
 
     g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, num_members_total = dataset.get_meetup_biparticle_graph(config)
 
-    g_encoder = model.GraphSAGE(config)
+    config.train.device = torch.device('cuda:' + str(config.train.gpuid) if torch.cuda.is_available() else "cpu")
 
-    pred = model.MLPPredictor(config)
+    g_encoder = model.GraphSAGE(config).to(config.train.device)
+
+    pred = model.MLPPredictor(config).to(config.train.device)
 
     optimizer = torch.optim.Adam(itertools.chain(g_encoder.parameters(), pred.parameters()), lr=0.01)
 

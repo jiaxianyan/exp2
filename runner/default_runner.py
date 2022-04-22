@@ -6,10 +6,11 @@ from tqdm import tqdm
 class DefaultRunner(object):
     def __init__(self,g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, num_members_total, g_encoder, pred, optimizer, config):
         self.config = config
+        self.device = config.train.device
         self.optimizer = optimizer
 
-        self.g_train_pos = g_train_pos
-        self.g_train_neg = g_train_neg
+        self.g_train_pos = g_train_pos.to(self.device)
+        self.g_train_neg = g_train_neg.to(self.device)
 
         self.valid_events_ids = valid_events_ids
         self.test_events_ids = test_events_ids
@@ -41,11 +42,13 @@ class DefaultRunner(object):
             g.add_nodes(self.g_train_neg.number_of_nodes())
             g.add_edges(src, dst)
 
+            g = g.to(self.device)
+
             score = self.pred(g, h)
             positive_indexs = [int(index) for index in self.e2m_dict[id]]
             ground_labels = torch.zeros(len(score))
             ground_labels[positive_indexs] = 1
-            acc = commons.accuracy(ground_labels,score.squeeze())
+            acc = commons.accuracy(ground_labels,score.squeeze(),self.device)
             accs.append(acc)
             if len(positive_indexs)>0:
                 recall = commons.recall(positive_indexs,score.squeeze())
@@ -63,7 +66,7 @@ class DefaultRunner(object):
             h = self.g_encoder(self.g_train_pos, self.g_train_pos.ndata['h'])
             pos_score = self.pred(self.g_train_pos, h)
             neg_score = self.pred(self.g_train_neg, h)
-            loss = commons.compute_loss(pos_score, neg_score)
+            loss = commons.compute_loss(pos_score, neg_score, self.device)
 
             # backward
             self.optimizer.zero_grad()

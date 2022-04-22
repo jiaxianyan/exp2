@@ -9,6 +9,7 @@ data:
 
 train:
   epochs: 100
+  gpuid: 1
 
 test:
   epoch: 100
