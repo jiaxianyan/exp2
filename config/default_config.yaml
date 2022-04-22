@@ -1,0 +1,17 @@
+base_path:
+log_path:
+data:
+  event2member_path: ./data/event2member.txt
+  event_id_path: ./data/event_id.txt
+  member_id_path: ./data/member_id.txt
+  train_ratio: 0.6
+  valid_ratio: 0.2
+
+train:
+  epochs:
+
+test:
+  epoch:
+
+model:
+  model_type: GCN
