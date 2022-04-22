@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 from glob import glob
 import json
 import os
+from bs4 import BeautifulSoup
 
 dataset_path = './Meetup/All_Unpack/'
 output_path = './data/'
@@ -12,16 +13,20 @@ class Parser(object):
         self.dataset_path = dataset_path
         self.output_path = output_path
         self.event2member_path = os.path.join(output_path, 'event2member.txt')
+        self.group2member_path = os.path.join(output_path, 'group2member.txt')
         self.event_id_path = os.path.join(output_path, 'event_id.txt')
         self.member_id_path = os.path.join(output_path, 'member_id.txt')
 
-    def file2dict(self, file_path):
+    def file2dict(self, file_path, reverse=False):
         D = {}
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             for line in lines:
                 new_id, old_id = line.split()
-                D[old_id] = new_id
+                if reverse:
+                    D[new_id] = old_id
+                else:
+                    D[old_id] = new_id
         return D
 
     def parseEvent2Member(self, mode='buildGraph'):
@@ -40,13 +45,14 @@ class Parser(object):
             global_event_ids = []
             global_member_ids = []
         elif mode == 'buildGraph':
-            f = open(self.event2member_path, 'a', encoding='utf-8')
+            global_group_members = {}
 
         for xml_file in RSVPs_xml_files:
             tree = ET.parse(xml_file)
             root = tree.getroot()
             event_ids = []
             member_ids = []
+            group_id = ''
             for item in root[1]:
                 for child in item:
                     if child.tag == 'member':
@@ -54,16 +60,23 @@ class Parser(object):
                             member_ids.append(member_id_dict[child[0].text])
                         elif mode == 'getID':
                             member_ids.append(child[0].text)
-                    if child.tag == 'event':
+                    elif child.tag == 'event':
                         if mode == 'buildGraph':
                             event_ids.append(event_id_dict[child[0].text])
                         elif mode == 'getID':
                             event_ids.append(child[0].text)
+                    elif child.tag == 'group':
+                        if mode == 'buildGraph':
+                            group_id = child[2].text
             if (len(set(event_ids)) == 1):
                 if mode == 'buildGraph':
                     with open(self.event2member_path, 'a', encoding='utf-8') as f:
                         f.write(
                             f'{event_ids[0]} {" ".join(sorted(set(member_ids)))}\n')
+                    if not group_id in global_group_members:
+                        global_group_members[group_id] = member_ids
+                    else:
+                        global_group_members[group_id].extend(member_ids)
                 elif mode == 'getID':
                     global_event_ids.append(event_ids[0])
                     global_member_ids.extend(member_ids)
@@ -79,7 +92,9 @@ class Parser(object):
             with open(self.member_id_path, 'a', encoding='utf-8') as fm:
                 fm.write('\n'.join(global_member_ids))
         elif mode == 'buildGraph':
-            f.close()
+            with open(self.group2member_path, 'w', encoding='utf-8') as f:
+                for group_id, members in global_group_members.items():
+                    f.write(f'{group_id} {" ".join(members)}\n')
 
     def parseID(self, file_path, file_pattern):
         id_path = os.path.join(self.output_path, file_path)
@@ -110,27 +125,6 @@ class Parser(object):
             for new_id, old_id in enumerate(global_ids, start):
                 f.write(f'{new_id} {old_id}\n')
         return len(global_ids)
-
-    def getTime(self, file_path, file_pattern):
-        id_path = os.path.join(self.output_path, file_path)
-        with open(id_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        with open(id_path, 'w', encoding='utf-8') as f:
-            for line in lines:
-                new_id, old_id = line.split()
-                old_id = old_id.strip()
-                xml_file = os.path.join(
-                    self.dataset_path, f'{file_pattern} {old_id}.xml')
-                tree = ET.parse(xml_file)
-                root = tree.getroot()
-                created_time = 0
-                utc_offset = 0
-                for child in root:
-                    if child.tag == 'created':
-                        created_time = int(child.text)
-                    elif child.tag == 'utc_offset':
-                        utc_offset = int(child.text)
-                f.write(f'{new_id} {old_id} {str(created_time + utc_offset)}\n')
 
     def getTopics(self, topics_file, member2topic_file):
         global_topics = {}
@@ -166,6 +160,49 @@ class Parser(object):
         with open(topics_path, 'w', encoding='utf-8') as f:
             json.dump(global_topics, f)
 
+    def getEventInfo(self, event_file, event2group_file):
+        event_path = os.path.join(self.output_path, event_file)
+        event2group_path = os.path.join(self.output_path, event2group_file)
+        global_events = {}
+        event2group = {}
+        xml_files = glob(os.path.join(
+            self.dataset_path, 'PastEvent *.xml'))
+        event_id_dict = self.file2dict(self.event_id_path)
+        for xml_file in xml_files:
+            tree = ET.parse(xml_file)
+            root = tree.getroot()
+            event_id = ''
+            desc = ''
+            name = ''
+            group_id = ''
+            created_time = 0
+            utc_offset = 0
+
+            for child in root:
+                if child.tag == 'group':
+                    group_id = child[3].text
+                elif child.tag == 'id':
+                    event_id = event_id_dict[child.text]
+                elif child.tag == 'created':
+                    created_time = int(child.text)
+                elif child.tag == 'utc_offset':
+                    utc_offset = int(child.text)
+                elif child.tag == 'description':
+                    desc = child.text
+                    desc = BeautifulSoup(desc, "html.parser").text
+                elif child.tag == 'name':
+                    name = child.text
+            global_events[event_id] = {
+                'created_time': created_time+utc_offset, 'desc': desc, 'name': name}
+            event2group[event_id] = group_id
+
+        with open(event_path, 'w', encoding='utf-8') as f:
+            json.dump(global_events, f)
+
+        with open(event2group_path, 'w', encoding='utf-8') as f:
+            for event_id, group_id in event2group.items():
+                f.write(f'{event_id} {group_id}\n')
+
 
 if __name__ == '__main__':
     parser = Parser(dataset_path, output_path)
@@ -175,5 +212,5 @@ if __name__ == '__main__':
     members_num = parser.addNewID('member_id.txt')
     parser.addNewID('event_id.txt', members_num)
     parser.parseEvent2Member()
-    parser.getTime('event_id.txt', 'PastEvent')
     parser.getTopics('topic.json', 'member2topic.txt')
+    parser.getEventInfo('event.json', 'event2group.txt')
