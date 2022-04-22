@@ -10,13 +10,14 @@ if __name__ == '__main__':
 
     config = commons.get_config_easydict(args.config_path)
 
-    g_train_pos, g_train_neg, valid_events_ids, test_events_ids = dataset.get_meetup_biparticle_graph(config)
+    g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, num_members_total = dataset.get_meetup_biparticle_graph(config)
 
     g_encoder = model.GraphSAGE(config)
+
     pred = model.MLPPredictor(config)
 
     optimizer = torch.optim.Adam(itertools.chain(g_encoder.parameters(), pred.parameters()), lr=0.01)
 
-    solver = runner.DefaultRunner(g_train_pos, g_train_neg, valid_events_ids, test_events_ids, g_encoder, pred, optimizer, config)
+    solver = runner.DefaultRunner(g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, num_members_total, g_encoder, pred, optimizer, config)
 
     solver.train()

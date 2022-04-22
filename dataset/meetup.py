@@ -110,4 +110,4 @@ def get_meetup_biparticle_graph(config):
     # g_valid = get_test_graph(copy.deepcopy(g),e2m_dict,valid_events_ids,num_members_total)
     # g_test  = get_test_graph(copy.deepcopy(g),e2m_dict,test_events_ids,num_members_total)
 
-    return g_train_pos, g_train_neg, valid_events_ids, test_events_ids
+    return g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, num_members_total

@@ -12,3 +12,11 @@ def compute_auc(pos_score, neg_score):
     labels = torch.cat(
         [torch.ones(pos_score.shape[0]), torch.zeros(neg_score.shape[0])]).numpy()
     return roc_auc_score(labels, scores)
+
+def accuracy(ground_labels,pred,threshold=0.5):
+    labels_pred = pred > threshold
+    return sum(ground_labels==labels_pred)/len(ground_labels)
+
+def recall(positive_indexs,pred,threshold=0.5):
+    labels_pred = pred > threshold
+    return sum(labels_pred[positive_indexs]) /len(positive_indexs)
