@@ -4,14 +4,16 @@ data:
   event2member_path: ./data/event2member.txt
   event_id_path: ./data/event_id.txt
   member_id_path: ./data/member_id.txt
-  train_ratio: 0.6
-  valid_ratio: 0.2
+  train_ratio: 0.7
+  valid_ratio: 0.1
 
 train:
-  epochs:
+  epochs: 100
 
 test:
-  epoch:
+  epoch: 100
 
 model:
   model_type: GCN
+  in_feats: 2
+  h_feats: 32
