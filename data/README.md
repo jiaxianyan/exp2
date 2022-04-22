@@ -32,6 +32,10 @@
 * 格式：[group_id] [new_member_id1] [new_member_id2] [new_member_id3] ...
 * 说明：记录每个group包含哪些members（仅包含在RSVPs中出现的）
 
+## event2group.txt
+* 格式：[new_event_id] [group_id] 
+* 说明：每个event对应的group
+
 ## event.json
 * 格式：
   ```json
