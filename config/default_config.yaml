@@ -4,6 +4,8 @@ data:
   event2member_path: ./data/event2member.txt
   event_id_path: ./data/event_id.txt
   member_id_path: ./data/member_id.txt
+  event2group_path: ./data/event2group.txt
+  group2member_path: ./datagroup2member.txt
   train_ratio: 0.7
   valid_ratio: 0.1
 

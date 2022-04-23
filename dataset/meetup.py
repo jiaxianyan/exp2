@@ -47,6 +47,26 @@ def get_member2event_dict(num_members_total,e2m_dict,event_ids):
             m2e_dict[int(member)].append(event_id)
     return m2e_dict
 
+def get_event2gruop_dict(config):
+    e2g_dict = {}
+    with open(config.data.event2group_path,'r') as f:
+        lines = f.read().strip().split('\n')
+    lines = [line.split() for line in lines]
+    for line in liens:
+        e2g_dict[int(line[0])] = int(line[1])
+    return e2g_dict
+
+def get_group2member_dict(config):
+    g2m_dict = {}
+    for i in range(num_events_total):
+        g2m_dict[i+num_members_total] = []
+    with open(config.data.group2member_path,'r') as f:
+        lines = f.read().strip().split('\n')
+    lines = [line.split() for line in lines]
+    for line in lines:
+        g2m_dict[int(line[0])] = line[1:]
+    return g2m_dict
+
 def get_train_graph(g, e2m_dict, event_ids, num_members_total, num_events_total):
     src_pos,dst_pos,src_neg,dst_neg = [],[],[],[]
     for event_id in event_ids:
@@ -95,6 +115,8 @@ def get_meetup_biparticle_graph(config):
     train_events_ids, valid_events_ids, test_events_ids, num_events_total = get_event_train_valid_test_sets(config)
     num_members_total = get_member_info(config)
     e2m_dict = get_event2member_dict(config,num_members_total,num_events_total)
+    e2g_dict = get_event2gruop_dict(config)
+    g2m_dict = get_group2member_dict(config)
 
     m2e_dict_total = get_member2event_dict(num_members_total,e2m_dict,train_events_ids+valid_events_ids+test_events_ids)
     m2e_dict_train = get_member2event_dict(num_members_total,e2m_dict,train_events_ids)
@@ -110,4 +132,4 @@ def get_meetup_biparticle_graph(config):
     # g_valid = get_test_graph(copy.deepcopy(g),e2m_dict,valid_events_ids,num_members_total)
     # g_test  = get_test_graph(copy.deepcopy(g),e2m_dict,test_events_ids,num_members_total)
 
-    return g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, num_members_total
+    return g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, e2g_dict, g2m_dict, num_members_total

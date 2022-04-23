@@ -4,7 +4,7 @@ import commons
 from tqdm import tqdm
 
 class DefaultRunner(object):
-    def __init__(self,g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, num_members_total, g_encoder, pred, optimizer, config):
+    def __init__(self,g_train_pos, g_train_neg, valid_events_ids, test_events_ids, e2m_dict, e2g_dict, g2m_dict, num_members_total, g_encoder, pred, optimizer, config):
         self.config = config
         self.device = config.train.device
         self.optimizer = optimizer
@@ -16,6 +16,8 @@ class DefaultRunner(object):
         self.test_events_ids = test_events_ids
 
         self.e2m_dict = e2m_dict
+        self.e2g_dict = e2g_dict
+        self.g2m_dict = g2m_dict
         self.num_members_total = num_members_total
         self.num_events_total = len(e2m_dict.keys())
 
