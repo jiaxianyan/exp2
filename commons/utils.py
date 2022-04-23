@@ -30,3 +30,8 @@ def get_logger(run_dir):
     sh.setFormatter(sformatter)
     logging.basicConfig(level=logging.INFO, handlers=[fh, sh])
     return logging.getLogger()
+
+def output_results_sequence(matrics_sequence):
+    print('===========result sequence==============')
+    for index,matrics in enumerate(matrics_sequence):
+        print('No.{}, AUC : {:.4f}, acc : {:.4f}, recall : {:.4f}, F1 : {:.4f}'.format(index+1,matrics[0],matrics[1],matrics[2],matrics[3]))

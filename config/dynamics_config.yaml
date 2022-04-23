@@ -13,7 +13,7 @@ data:
 train:
   epochs: 100
   gpuid: 1
-  save: true
+  save: false
   save_path: ./log
 
 test:
